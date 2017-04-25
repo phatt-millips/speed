@@ -1,0 +1,74 @@
+Once the server is ran it waits for the player one on port 2001
+"connected" is sent to the first player
+The server waits for player 2 to connect on port 2002
+"connected" is sent to the second player
+"ready" is sent to both players
+both players respond "ready"
+the game begins with server dealing out cards to both players:
+"1: 1S
+2: 2H
+3: 13C
+4: 11D
+5: 12S"	
+	where: S = Spade, H = Heart, D = Diamond, C = Clube, 1 = Ace, 11 = Jack, 12 = Queen, 13 = King
+
+there are 6 decks of cards the server handles:
+player1's draw_deck, discard_deck, refresh_deck
+player2's draw_deck, discard_deck, refresh_deck
+
+both players send the massage:
+"play"
+and the server responds:
+"Discard1: 1H (card on discard_deck)
+Discard2: 5D
+You: 20 (number of cards)
+Opponent: 20"
+
+moving refresh_deck's  top_card onto the discard_deck so that both cards are visble
+when a player lays down a card on the discard_deck_1 the player sends the message:
+"Discard1: 2S"
+
+if the card is correct (in the players hand and incremental or decremental to the current discard_deck card) the server will send to both players: 
+"Discard1: 2S
+Discard2: 5D
+You: 19
+Opponent: 20" 
+
+if the card is incorrect the player will send to both players:
+"Discard1: 1H
+Discard2: 5D
+You: 20
+Opponent: 20"
+
+Each player will be able to see both the number cards they have and the number their opponent has.
+
+When a player wants to draw a new card the player sends:
+"Reqest new card in hand"
+
+If the player's hand is full:
+"Full"
+else 
+"6H"
+
+If there are no moves each player must request:
+"Request new card in discard"
+
+The next response from the server will be a new discard message:
+"Discard1: 1H
+Discard2: 3H
+You: ##
+Opponent: ##"
+
+The games is won once one player reach 0 before the other.
+The Server responds:
+"You won"
+or 
+"Opponenet won"
+
+If both players respond:
+"Play again"
+The server will reset
+
+If one player responds:
+"Exit"
+The sever will disconnect both players
