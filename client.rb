@@ -15,13 +15,11 @@ end
 puts "Press Enter when ready"
 STDIN.gets
 s.send 'Player Ready', 0
-
-#keystroke = ""
-#while keystroke != 'q' 
-	#system('cls')
-	#puts s.gets	
-	#keystroke = STDIN.gets
-#end
+puts s.gets
+keystroke = ""
+while keystroke != 'q' 
+	puts s.gets	
+end
 #while line = s.gets # Read lines from socket
 	#puts line         # and print them
 	#puts "Press Enter when ready"
