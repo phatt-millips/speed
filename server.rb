@@ -2,6 +2,7 @@ require 'socket'
 require 'rubycards'
 include RubyCards
 #setup 
+
 origin_deck = Deck.new.shuffle!
 player1_main_deck = Hand.new.draw origin_deck,15
 player2_main_deck = Hand.new.draw origin_deck,15
@@ -12,6 +13,7 @@ discard_card2 = Hand.new.draw origin_deck,1
 player1_hand = Hand.new.draw origin_deck,5
 player2_hand = Hand.new.draw origin_deck,5
 
+#Accept
 system('cls')
 puts "Server Running"
 server = TCPServer.open(2000)
@@ -28,7 +30,18 @@ Thread.fork(p2 = server.accept) do |player2|
 end
 p1.puts "Both Players Connected"
 p2.puts "Both Players Connected"
+p1.puts "~~"
+p2.puts "~~"
 
+#Begin Game
+p1.recv(12) && p2.recv(12) #waits until both players are ready
+puts "Game Begin"
+player1_hand.each {|card| p1.puts card.rank + ':' + card.suit }
+player2_hand.each {|card| p2.puts card.rank + ':' + card.suit }
+p1.puts "~~"
+p2.puts "~~"
+
+#OLD SERVER
 #server2 = TCPServer.new 2002 # Server bind to port 2001
 #player1 = server1.accept    # Wait for a client to connect
 #player1.puts "Connected. Waiting for player 2"

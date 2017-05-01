@@ -3,23 +3,30 @@ require 'rubycards'
 include RubyCards
 system('cls')
 
-port = 2000 + ARGV[0].to_i
-
-s = TCPSocket.new 'localhost', port
-puts s.gets
-#waits for reponse from server
-while (s.gets.chomp != 'Server Ready') 
-	puts 'Waiting on server'
+hand = Hand.new
+s = TCPSocket.new 'localhost', 2000 
+while msg = s.gets do
+	puts msg 
+	break if  msg.chomp == "~~"
 end
 
 puts "Press Enter when ready"
 STDIN.gets
 s.send 'Player Ready', 0
-puts s.gets
-keystroke = ""
-while keystroke != 'q' 
-	puts s.gets	
-end
+
+msg = s.gets.chomp.split(":")
+while msg[0] != "~~"
+	msg[0] = msg[0].to_i == 0? msg[0] : msg[0].to_i 	
+	hand.add(Card.new(msg[0], msg[1]))
+	msg = s.gets.chomp.split(":")
+end	
+hand.sort!
+puts hand
+#puts s.gets
+#keystroke = ""
+#while keystroke != 'q' 
+#	puts s.gets	
+#end
 #while line = s.gets # Read lines from socket
 	#puts line         # and print them
 	#puts "Press Enter when ready"
