@@ -59,6 +59,12 @@ class Game
 		@p2.send(string)
 		@p2.end_msg if ending_msg
 	end
+	def update(player)
+		send_totals(player)
+		send_discard(player)
+		send_cards(player)	
+		to_both_players("~~~~",false) #End of Updates
+	end
 	def listen(player = 0)
 		case player
 		when 0
@@ -74,31 +80,28 @@ class Game
 
 		p1t = Thread.new do
 			[@p1,@p1.gets]
+
 		end
 		p2t = Thread.new do
 			[@p2,@p2.gets]
 		end
 
 		#Stops listening to one player when the other starts talking
-		control_thread = Thread.new do
-			ret_thread = []
-			loop do
-				if (!p1t.alive?) 
-					ret_thread = p1t
-					p2t.kill
-					break
-				elsif (!p2t.alive?)
-					ret_thread = p2t
-					p1t.kill
-					break
-				end
+		ret_thread = []
+		loop do
+			if (!p1t.alive?) 
+				ret_thread = p1t
+				p2t.kill
+				break
+			elsif (!p2t.alive?)
+				ret_thread = p2t
+				p1t.kill
+				break
 			end
-			ret_thread
 		end
-		control_thread.join
-		return control_thread.value
+		return ret_thread.value 
 	end
-	def send_cards(player = 0)
+	def send_cards(player)
 		case player
 		when 0
 			@p1.send_current_cards
@@ -109,19 +112,44 @@ class Game
 			@p2.send_current_cards
 		end
 	end
-	def send_discard
-		to_both_players("Discard", false)
-		to_both_players("#{@discard1.rank}:#{@discard1.suit}", false)
-		to_both_players("#{@discard2.rank}:#{@discard2.suit}")
+	def send_discard(player)
+		case player
+		when 0	
+			to_both_players("Discard", false)
+			to_both_players("#{@discard1.rank}:#{@discard1.suit}", false)
+			to_both_players("#{@discard2.rank}:#{@discard2.suit}")
+		when 1
+			@p1.send("Discard")
+			@p1.send("#{@discard1.rank}:#{@discard1.suit}")
+			@p1.send("#{@discard2.rank}:#{@discard2.suit}")
+		when 2
+			@p2.send("Discard")
+			@p2.send("#{@discard1.rank}:#{@discard1.suit}")
+			@p2.send("#{@discard2.rank}:#{@discard2.suit}")
+		end
 	end
-		
+	def send_totals(player)
+		if player == 1 || player == 0
+			@p1.send("You:#{@p1.num_cards}")
+			@p1.send("Opp:#{@p2.num_cards}")
+			@p1.end_msg
+		end
+		if player == 2 || player == 0
+			@p2.send("You:#{@p2.num_cards}")
+			@p2.send("Opp:#{@p1.num_cards}")
+			@p2.end_msg
+		end
+		#to_both_players("~~")
+	end
 end
 game = Game.new
-game.listen #listens for any responce
-game.send_discard
-game.send_cards
-game.listen_threaded
 
+game.listen #listens for any responce
+
+loop do 
+	game.update(0)
+	game.listen_threaded
+end
 #origin_deck = Deck.new.shuffle!
 #player1_main_deck = Hand.new.draw origin_deck,15
 #player2_main_deck = Hand.new.draw origin_deck,15
