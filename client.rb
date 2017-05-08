@@ -23,22 +23,33 @@ class Player
 		@total = []
 		@discard = []
 		@hand = []
-
+		@refresh = false
+		@game_over = false
 		@s.listen(true)
 		puts "Press Enter when ready"
 		STDIN.gets
 		@s.puts 'Player Ready'
 	end
 	def update
+		@game_over = get_game_over
+		@refresh = get_refresh
 		@total = get_total
 		@discard = get_discard
 		@hand = get_cards	
 	end
 
 	def display
-		puts @total
-		puts @discard
-		puts @hand
+		if (@game_over || @refresh)
+			if (@game_over)	
+				puts "Game Over"
+			else
+				puts "Refresh(y/N)?"
+			end
+		else
+			puts @total
+			puts @discard
+			puts @hand
+		end
 	end
 
 	def get_cards
@@ -73,7 +84,16 @@ class Player
 		end
 		ret_hand
 	end
-	
+	def get_refresh
+		#Message format:
+		#	Refresh:true		
+		@s.listen[0].split(":")[1] == "true" ? true : false
+	end
+	def get_game_over
+		#Message format:
+		#	GameOver:false	
+		@s.listen[0].split(":")[1] == "true" ? true : false
+	end
 	def get_total
 		#Message format:
 		#	You:20
@@ -90,7 +110,8 @@ class Player
 	def request_new_discard
 		#Message format:
 		#	Request new card in discard
-		@s.puts("Request new card in discard")
+		@s.puts("refresh")
+		@s.listen(true)
 	end
 
 	def discard(card,pile)
@@ -123,14 +144,5 @@ end
 loop do
 	player.prompt
 end
-#keystroke = "
-#while keystroke != 'q' 
-#	puts s.gets	
-#end
-#while line = s.gets # Read lines from socket
-	#puts line         # and print them
-	#puts "Press Enter when ready"
-	#s.write "Player 1 ready"
-#end
 puts "Game Ended"
 s.close  
