@@ -1,7 +1,18 @@
 require 'socket'
 require 'rubycards'
 include RubyCards
+def clear_screen
+	system('cls')
+end
 #setup 
+class Card
+	def adjacent_to?(card)
+		self == card || self.to_i + 1 == card.to_i || self.to_i - 1 == card.to_i
+	end
+end
+class Hand
+	def_delegators :cards, :<<, :[], :delete_at #allows me to delete cards from a hand
+end
 class Player 
 	@@num_players = 0
 	def initialize(deck, server)
@@ -31,6 +42,18 @@ class Player
 	def num_cards
 		@hand.count + @draw_pile.count
 	end
+	def draw
+		if @hand.count < 5
+			@hand.draw << @draw_pile.shift
+		end
+	end
+	def discard(postion, pile)
+		if (puts @hand[postion].adjacent_to? pile)
+			@hand.delete_at position
+		else 
+			pile
+		end
+	end	
 	def to_s
 		"Player #{@player_id}"
 	end
@@ -38,12 +61,15 @@ end
 
 class Game
 	def initialize(port = 2000)
+		clear_screen
 		@server = TCPServer.open(port)
 		@deck = Deck.new.shuffle!
-		@refresh1 = Hand.new.draw @deck,5
-		@refresh2 = Hand.new.draw @deck,5
-		@discard1 = @deck.draw
-		@discard2 = @deck.draw
+		@refresh = []
+		@discard = []
+		@refresh[0] = Hand.new.draw @deck,5
+		@refresh[1] = Hand.new.draw @deck,5
+		@discard[0] = @deck.draw
+		@discard[1] = @deck.draw
 		STDOUT.puts("Server on port #{port}")
 		@p1 = Player.new(@deck, @server)
 		STDOUT.puts("Player 1 Connected")
@@ -63,7 +89,6 @@ class Game
 		send_totals(player)
 		send_discard(player)
 		send_cards(player)	
-		to_both_players("~~~~",false) #End of Updates
 	end
 	def listen(player = 0)
 		case player
@@ -116,16 +141,16 @@ class Game
 		case player
 		when 0	
 			to_both_players("Discard", false)
-			to_both_players("#{@discard1.rank}:#{@discard1.suit}", false)
-			to_both_players("#{@discard2.rank}:#{@discard2.suit}")
+			to_both_players("#{@discard[0].rank}:#{@discard[0].suit}", false)
+			to_both_players("#{@discard[1].rank}:#{@discard[1].suit}")
 		when 1
 			@p1.send("Discard")
-			@p1.send("#{@discard1.rank}:#{@discard1.suit}")
-			@p1.send("#{@discard2.rank}:#{@discard2.suit}")
+			@p1.send("#{@discard[0].rank}:#{@discard[0].suit}")
+			@p1.send("#{@discard[1].rank}:#{@discard[1].suit}")
 		when 2
 			@p2.send("Discard")
-			@p2.send("#{@discard1.rank}:#{@discard1.suit}")
-			@p2.send("#{@discard2.rank}:#{@discard2.suit}")
+			@p2.send("#{@discard[0].rank}:#{@discard[0].suit}")
+			@p2.send("#{@discard[1].rank}:#{@discard[1].suit}")
 		end
 	end
 	def send_totals(player)
@@ -141,6 +166,12 @@ class Game
 		end
 		#to_both_players("~~")
 	end
+	def draw(player)
+		player.draw
+	end
+	def discard(player, position, pile)
+		@discard[pile-1] = player.discard(position, @discard[pile-1])
+	end
 end
 game = Game.new
 
@@ -148,66 +179,14 @@ game.listen #listens for any responce
 
 loop do 
 	game.update(0)
-	game.listen_threaded
+	player, move = game.listen_threaded
+	case move
+	when "draw" || "Draw"
+		puts "#{player} drew"
+		game.draw(player)
+	when /\d+/ #=== move.chomp
+		puts "#{player} #{move}"
+		card, pile = move.split('')
+		game.discard(player, card.to_i, pile.to_i)
+	end
 end
-#origin_deck = Deck.new.shuffle!
-#player1_main_deck = Hand.new.draw origin_deck,15
-#player2_main_deck = Hand.new.draw origin_deck,15
-#refresh_deck2 = Hand.new.draw origin_deck,5
-#discard_card2 = Hand.new.draw origin_deck,1
-##player1_hand = Hand.new.draw origin_deck,5
-##player2_hand = Hand.new.draw origin_deck,5
-
-#Accept
-##system('cls')
-##puts "Server Running"
-##server = TCPServer.open(2000)
-##puts "player 1 opened"
-##p1 = server.accept
-##puts "player 1 accepted"
-##p1.puts "Hello player 1" 
-##p1.puts "Waiting on player 2"
-##puts "player 2 opened"
-##p2 = server.accept
-##puts "player 2 accepted"
-##p2.puts "Hello player 2"	
-##p1.puts "Both Players Connected"
-##p2.puts "Both Players Connected"
-##p1.puts "~~"
-##p2.puts "~~"
-
-#Begin Game
-##puts p1.recv(12) && p2.recv(12) #waits until both players are ready
-##puts "Game Begin"
-##player1_hand.each {|card| p1.puts card.rank + ':' + card.suit }
-##player2_hand.each {|card| p2.puts card.rank + ':' + card.suit }
-##p1.puts "~~"
-##p2.puts "~~"
-
-#OLD SERVER
-#server2 = TCPServer.new 2002 # Server bind to port 2001
-#player1 = server1.accept    # Wait for a client to connect
-#player1.puts "Connected. Waiting for player 2"
-#player2 = server2.accept
-#player2.puts "Connected"
-#puts "Both Players Connected"
-#puts "Server Ready"
-#player1.puts "Server Ready" 
-#player2.puts "Server Ready"
-#
-#while player1.recv(12).chomp != "Player Ready" do
-#end
-#while player2.recv(12).chomp != "Player Ready" do
-#end
-#
-#player1.puts "Begin Game"
-#player2.puts "Begin Game"
-#
-	
-
-#loop do
-	#player1.puts player1_hand
-#end
-
-#player1.close
-#player2.close

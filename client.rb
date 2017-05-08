@@ -1,6 +1,9 @@
 require 'socket'
 require 'rubycards'
 include RubyCards
+def clear_screen
+	system('cls')
+end
 class TCPSocket 
 	def listen(print = false, stop_msg = "~~")
 		ret_array = []
@@ -100,32 +103,25 @@ class Player
 		@s.puts("#{card.rank}:#{card.suit}")
 		self.update
 	end
-
-	def listening_and_sending
-		listen_thread = Thread.new() do
-			@s.listen(true,"~~~~")
-		end
-		sending_thread = Thread.new do 
-			@s.puts (STDIN.gets)
-		end
-		loop do 
-			if (!listen_thread.alive?)
-				puts "listen_thread dead"	
-				break
-			end
-		end
-		
-		[listen_thread.value, sending_thread.value]
+	
+	def prompt
+		@s.puts STDIN.gets
 	end
+
 end
-system('cls')
+clear_screen
 puts "Welcome to Speed"
 s = TCPSocket.new 'localhost', 2000 
 player = Player.new(s)
+Thread.new do 
+	loop do
+		player.update
+		clear_screen
+		player.display
+	end
+end
 loop do
-	player.update
-	player.display
-	player.listening_and_sending
+	player.prompt
 end
 #keystroke = "
 #while keystroke != 'q' 
